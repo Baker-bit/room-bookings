@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Konferenzraum – HUZ</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #f0f2f5;
+    --surface: #ffffff;
+    --surface2: #f7f8fa;
+    --border: #e2e5ea;
+    --text: #1a1d23;
+    --text-muted: #6b7280;
+    --accent: #7c3aed;
+    --accent-light: #f5f3ff;
+    --accent-hover: #6d28d9;
+    --danger: #dc2626;
+    --danger-light: #fef2f2;
+    --success: #16a34a;
+    --success-light: #f0fdf4;
+    --warning: #d97706;
+    --warning-light: #fffbeb;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.10);
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 24px 16px 48px;
+  }
+
+  header {
+    max-width: 760px;
+    margin: 0 auto 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .logo { display: flex; align-items: center; gap: 12px; }
+
+  .logo-icon {
+    width: 44px; height: 44px;
+    background: var(--accent);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+  }
+
+  .logo-text h1 { font-size: 18px; font-weight: 600; letter-spacing: -0.3px; }
+  .logo-text p { font-size: 12px; color: var(--text-muted); font-weight: 400; }
+
+  .sync-badge {
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    transition: all 0.3s;
+  }
+  .sync-badge.ok { background: var(--success-light); border-color: #bbf7d0; color: var(--success); }
+  .sync-badge.err { background: var(--danger-light); border-color: #fecaca; color: var(--danger); }
+
+  .main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+
+  /* TODAY BANNER */
+  .today-banner {
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .today-header {
+    padding: 14px 20px;
+    background: var(--accent);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .today-header .title { font-size: 13px; font-weight: 600; letter-spacing: 0.2px; }
+  .today-header .date { font-size: 12px; font-family: 'DM Mono', monospace; opacity: 0.85; }
+
+  .today-slots { padding: 0; }
+
+  .today-slot {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .today-slot:last-child { border-bottom: none; }
+
+  .slot-time {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+    min-width: 80px;
+    flex-shrink: 0;
+  }
+
+  .slot-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .slot-dot.booked { background: var(--accent); }
+  .slot-dot.free { background: var(--success); }
+
+  .slot-info { flex: 1; }
+  .slot-info .slot-name { font-size: 13px; font-weight: 500; }
+  .slot-info .slot-purpose { font-size: 12px; color: var(--text-muted); font-style: italic; margin-top: 1px; }
+
+  .slot-end-btn {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 5px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--warning);
+    background: var(--warning-light);
+    color: var(--warning);
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .slot-end-btn:hover { background: #fef3c7; }
+
+  .today-empty {
+    padding: 20px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  /* CARD */
+  .card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .card-header {
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .card-title { font-size: 14px; font-weight: 600; letter-spacing: -0.1px; }
+  .card-body { padding: 20px; }
+
+  /* FORM */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+
+  label {
+    font-size: 12px; font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  input, select, textarea {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface2);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(124,58,237,0.1);
+    background: #fff;
+  }
+
+  input.error { border-color: var(--danger); box-shadow: 0 0 0 3px rgba(220,38,38,0.1); }
+
+  textarea { resize: vertical; min-height: 64px; }
+
+  .clash-warning {
+    display: none;
+    background: var(--danger-light);
+    border: 1px solid #fecaca;
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--danger);
+    margin-top: 4px;
+  }
+  .clash-warning.visible { display: block; }
+
+  .form-footer { margin-top: 16px; display: flex; justify-content: flex-end; }
+
+  /* BUTTONS */
+  .btn {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 500;
+    padding: 10px 18px;
+    border-radius: var(--radius-sm);
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(124,58,237,0.3); }
+  .btn-primary:disabled { background: #c4b5fd; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  .btn-outline { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+  .btn-outline:hover { background: var(--surface2); color: var(--text); }
+
+  .btn-export { background: var(--success-light); color: var(--success); border: 1px solid #bbf7d0; }
+  .btn-export:hover { background: #dcfce7; }
+
+  .btn-sm { font-size: 12px; padding: 6px 12px; }
+
+  /* TABS */
+  .tabs {
+    display: flex; gap: 2px;
+    background: var(--surface2);
+    border-radius: var(--radius-sm);
+    padding: 3px;
+  }
+
+  .tab-btn {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 500;
+    padding: 7px 16px;
+    border: none; border-radius: 6px;
+    background: transparent; color: var(--text-muted);
+    cursor: pointer; transition: all 0.15s;
+  }
+  .tab-btn.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* BOOKINGS LIST */
+  .bookings-list { display: flex; flex-direction: column; }
+
+  .booking-item {
+    display: flex; align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px; padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+  .booking-item:last-child { border-bottom: none; }
+  .booking-item:hover { background: var(--surface2); }
+
+  .booking-left { display: flex; gap: 14px; align-items: flex-start; }
+
+  .booking-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--accent-light);
+    color: var(--accent);
+    font-weight: 600; font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .booking-info .name { font-size: 14px; font-weight: 600; }
+  .booking-info .meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; font-family: 'DM Mono', monospace; }
+  .booking-info .purpose { font-size: 12px; color: var(--text-muted); margin-top: 3px; font-style: italic; }
+  .booking-info .notes-tag {
+    display: inline-block;
+    margin-top: 4px;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: var(--warning-light);
+    color: var(--warning);
+    border: 1px solid #fde68a;
+  }
+
+  .booking-actions { display: flex; gap: 6px; flex-shrink: 0; align-items: flex-start; }
+
+  .end-btn {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px; font-weight: 500;
+    padding: 5px 11px;
+    border-radius: 6px;
+    border: 1px solid var(--warning);
+    background: var(--warning-light);
+    color: var(--warning);
+    cursor: pointer; transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .end-btn:hover { background: #fef3c7; }
+
+  .delete-btn {
+    background: none; border: none;
+    cursor: pointer; color: var(--text-muted);
+    padding: 4px; border-radius: 6px;
+    font-size: 16px; transition: all 0.15s;
+  }
+  .delete-btn:hover { background: var(--danger-light); color: var(--danger); }
+
+  .empty-state { padding: 40px 20px; text-align: center; color: var(--text-muted); font-size: 14px; }
+  .empty-state .icon { font-size: 32px; margin-bottom: 8px; }
+
+  /* LOG TABLE */
+  .log-table-wrap { overflow-x: auto; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+
+  th {
+    text-align: left; padding: 10px 14px;
+    font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+
+  td {
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+  }
+
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface2); }
+
+  .log-footer {
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap; gap: 8px;
+    background: var(--surface2);
+  }
+
+  .log-count { font-size: 12px; color: var(--text-muted); font-family: 'DM Mono', monospace; }
+
+  /* CALENDAR */
+  .cal-nav {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+
+  .cal-title { font-size: 14px; font-weight: 600; flex: 1; text-align: center; letter-spacing: -0.1px; }
+  .cal-wrap { overflow-x: auto; padding: 0 20px 20px; }
+
+  .cal-table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-top: 16px; }
+
+  .cal-table th {
+    text-align: center; padding: 8px 4px;
+    font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text-muted);
+    border-bottom: 2px solid var(--border);
+    background: transparent;
+  }
+  .cal-table th.weekend { color: #dc2626; }
+
+  .cal-cell {
+    vertical-align: top; padding: 6px 6px 8px;
+    border: 1px solid var(--border);
+    min-height: 80px; height: 80px;
+  }
+  .cal-cell-empty { background: var(--surface2); }
+  .cal-today { background: var(--accent-light); }
+  .cal-today .cal-day-num {
+    background: var(--accent); color: #fff;
+    width: 22px; height: 22px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .cal-day-num {
+    font-size: 12px; font-weight: 500; color: var(--text-muted);
+    margin-bottom: 4px; font-family: 'DM Mono', monospace;
+    width: 22px; height: 22px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .cal-events { display: flex; flex-direction: column; gap: 2px; }
+
+  .cal-event {
+    font-size: 10px; padding: 2px 5px;
+    border-radius: 4px; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
+    cursor: default; line-height: 1.4;
+  }
+
+  .cal-event-booking { background: var(--accent-light); color: var(--accent); border: 1px solid rgba(124,58,237,0.2); }
+  .cal-event-log { background: var(--success-light); color: var(--success); border: 1px solid rgba(22,163,74,0.2); }
+
+  .cal-legend { display: flex; gap: 16px; align-items: center; }
+  .cal-legend-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-muted); }
+  .cal-legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.35);
+    backdrop-filter: blur(4px);
+    z-index: 100; align-items: center; justify-content: center; padding: 16px;
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface); border-radius: var(--radius);
+    box-shadow: var(--shadow-lg); padding: 24px;
+    max-width: 380px; width: 100%;
+  }
+
+  .modal h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+  .modal p { font-size: 14px; color: var(--text-muted); line-height: 1.6; margin-bottom: 20px; }
+
+  .modal-info {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 20px;
+    font-size: 13px; font-family: 'DM Mono', monospace;
+    line-height: 1.7; color: var(--text);
+  }
+
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+  /* LOGIN */
+  #loginOverlay {
+    position: fixed; inset: 0;
+    background: var(--bg);
+    z-index: 1000;
+    display: flex; align-items: center; justify-content: center; padding: 16px;
+  }
+  #loginOverlay.hidden { display: none; }
+
+  .login-card {
+    background: var(--surface); border-radius: var(--radius);
+    border: 1px solid var(--border); box-shadow: var(--shadow-lg);
+    padding: 32px; width: 100%; max-width: 360px;
+  }
+
+  .login-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
+  .login-heading { font-size: 16px; font-weight: 600; letter-spacing: -0.2px; margin-bottom: 4px; }
+  .login-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.5; }
+
+  .login-error {
+    font-size: 13px; color: var(--danger);
+    background: var(--danger-light); border: 1px solid #fecaca;
+    border-radius: var(--radius-sm); padding: 10px 12px;
+    margin-bottom: 16px; display: none;
+  }
+  .login-error.visible { display: block; }
+
+  @media (max-width: 520px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .form-group.full { grid-column: 1; }
+    header { flex-direction: column; align-items: flex-start; }
+    .cal-cell { min-height: 56px; height: 56px; }
+    .cal-event { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginOverlay">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="logo-icon">🏢</div>
+      <div class="logo-text"><h1>Konferenzraum</h1></div>
+    </div>
+    <p class="login-heading">Anmelden</p>
+    <p class="login-sub">Bitte geben Sie Ihre Zugangsdaten ein, um fortzufahren.</p>
+    <div class="login-error" id="loginError">Ungültige Zugangsdaten. Bitte erneut versuchen.</div>
+    <div class="form-group" style="margin-bottom:14px">
+      <label>Benutzername</label>
+      <input type="text" id="loginUser" placeholder="Benutzername" autocomplete="username">
+    </div>
+    <div class="form-group" style="margin-bottom:20px">
+      <label>Passwort</label>
+      <input type="password" id="loginPass" placeholder="Passwort" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="doLogin()">Anmelden</button>
+  </div>
+</div>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🏢</div>
+    <div class="logo-text">
+      <h1>Konferenzraum</h1>
+      <p>Haeuser Unserer Zukunft GmbH</p>
+    </div>
+  </div>
+  <span class="sync-badge" id="syncBadge">Verbinde…</span>
+</header>
+
+<div class="main">
+
+  <!-- TODAY VIEW -->
+  <div class="today-banner">
+    <div class="today-header">
+      <span class="title">📅 Heute im Überblick</span>
+      <span class="date" id="todayDate"></span>
+    </div>
+    <div class="today-slots" id="todaySlots">
+      <div class="today-empty">Keine Buchungen heute</div>
+    </div>
+  </div>
+
+  <!-- BOOKING FORM -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">Neue Buchung</span></div>
+    <div class="card-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Name</label>
+          <input type="text" id="fName" placeholder="Vor- und Nachname">
+        </div>
+        <div class="form-group">
+          <label>Datum</label>
+          <input type="date" id="fDate" onchange="checkClash()">
+        </div>
+        <div class="form-group">
+          <label>Startzeit</label>
+          <input type="time" id="fStart" onchange="checkClash()">
+        </div>
+        <div class="form-group">
+          <label>Endzeit</label>
+          <input type="time" id="fEnd" onchange="checkClash()">
+        </div>
+        <div class="form-group full">
+          <label>Zweck / Thema</label>
+          <input type="text" id="fPurpose" placeholder="z.B. Teambesprechung, Kundengespräch">
+        </div>
+        <div class="form-group full">
+          <label>Hinweise (optional)</label>
+          <textarea id="fNotes" placeholder="z.B. Beamer benötigt, Videokonferenz, Catering…"></textarea>
+          <div class="clash-warning" id="clashWarning">⚠️ Diese Zeit überschneidet sich mit einer bestehenden Buchung!</div>
+        </div>
+      </div>
+      <div class="form-footer">
+        <button class="btn btn-primary" id="saveBtn" onclick="saveBooking()">
+          <span>💾</span> Buchung speichern
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABS CARD -->
+  <div class="card">
+    <div class="card-header">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('bookings', this)">Aktuelle Buchungen</button>
+        <button class="tab-btn" onclick="switchTab('log', this)">Besprechungsprotokoll</button>
+        <button class="tab-btn" onclick="switchTab('calendar', this)">Kalender</button>
+      </div>
+    </div>
+
+    <!-- BOOKINGS -->
+    <div class="tab-panel active" id="tab-bookings">
+      <div class="bookings-list" id="bookingsList">
+        <div class="empty-state"><div class="icon">🏢</div>Keine aktiven Buchungen</div>
+      </div>
+    </div>
+
+    <!-- LOG -->
+    <div class="tab-panel" id="tab-log">
+      <div class="log-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th><th>Datum</th><th>Start</th><th>Ende</th>
+              <th>Zweck</th><th>Hinweise</th><th>Abgeschlossen</th>
+            </tr>
+          </thead>
+          <tbody id="logBody">
+            <tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-muted)">Noch keine abgeschlossenen Besprechungen</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="log-footer">
+        <span class="log-count" id="logCount">0 Einträge</span>
+        <button class="btn btn-export btn-sm" onclick="exportExcel()"><span>📥</span> Als Excel exportieren</button>
+      </div>
+    </div>
+
+    <!-- CALENDAR -->
+    <div class="tab-panel" id="tab-calendar">
+      <div class="cal-nav">
+        <button class="btn btn-outline btn-sm" onclick="calPrev()">‹</button>
+        <span class="cal-title" id="calTitle"></span>
+        <button class="btn btn-outline btn-sm" onclick="calNext()">›</button>
+      </div>
+      <div class="cal-wrap">
+        <table class="cal-table">
+          <thead>
+            <tr>
+              <th>Mo</th><th>Di</th><th>Mi</th><th>Do</th>
+              <th>Fr</th><th class="weekend">Sa</th><th class="weekend">So</th>
+            </tr>
+          </thead>
+          <tbody id="calGrid"></tbody>
+        </table>
+      </div>
+      <div class="log-footer">
+        <div class="cal-legend">
+          <div class="cal-legend-item">
+            <div class="cal-legend-dot" style="background:var(--accent-light);border:1px solid rgba(124,58,237,0.3)"></div>Aktive Buchung
+          </div>
+          <div class="cal-legend-item">
+            <div class="cal-legend-dot" style="background:var(--success-light);border:1px solid rgba(22,163,74,0.3)"></div>Abgeschlossen
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- END SESSION MODAL -->
+<div class="modal-overlay" id="endModal">
+  <div class="modal">
+    <h3>Sitzung beenden</h3>
+    <p>Die Buchung wird ins Besprechungsprotokoll übertragen und der Raum freigegeben.</p>
+    <div class="modal-info" id="endModalInfo"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('endModal')">Abbrechen</button>
+      <button class="btn btn-primary" id="confirmEndBtn">✓ Sitzung beenden</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE MODAL -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal">
+    <h3>Buchung löschen</h3>
+    <p>Diese Buchung wird entfernt und <strong>nicht</strong> ins Protokoll übertragen.</p>
+    <div class="modal-info" id="deleteModalInfo"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('deleteModal')">Abbrechen</button>
+      <button class="btn btn-primary" id="confirmDeleteBtn">✕ Löschen</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ─── AUTH ─────────────────────────────────────────────────────
+  if (sessionStorage.getItem('huz_auth') === '1') {
+    document.getElementById('loginOverlay').classList.add('hidden');
+  }
+
+  function doLogin() {
+    const u = document.getElementById('loginUser').value.trim();
+    const p = document.getElementById('loginPass').value;
+    if (u === 'HUZ' && p === 'BreiterWeg21') {
+      sessionStorage.setItem('huz_auth', '1');
+      document.getElementById('loginOverlay').classList.add('hidden');
+    } else {
+      document.getElementById('loginError').classList.add('visible');
+      document.getElementById('loginPass').value = '';
+      document.getElementById('loginPass').focus();
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    ['loginUser','loginPass'].forEach(id => {
+      document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+    });
+  });
+
+  // ─── CONFIG ───────────────────────────────────────────────────
+  const API_KEY       = '$2a$10$AQI9yI/6geWB3foXvxawxexTC3fWMKMQCrmxY6nDaDTYhCX50A0YW';
+  const BIN_BOOKINGS  = '6a0aa860adc21f119ab7f227';
+  const BIN_LOG       = '6a0aa87c250b1311c368075a';
+
+  const BASE    = 'https://api.jsonbin.io/v3/b';
+  const HEADERS = { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY };
+
+  let bookings = [];
+  let meetingLog = [];
+
+  // ─── BADGE ────────────────────────────────────────────────────
+  function badge(state, text) {
+    const el = document.getElementById('syncBadge');
+    el.className = 'sync-badge' + (state ? ' ' + state : '');
+    el.textContent = text;
+  }
+
+  // ─── JSONBIN ──────────────────────────────────────────────────
+  async function readBin(id) {
+    const r = await fetch(`${BASE}/${id}/latest`, { headers: { 'X-Master-Key': API_KEY } });
+    if (!r.ok) throw new Error('Read failed');
+    return (await r.json()).record;
+  }
+
+  async function writeBin(id, data) {
+    const r = await fetch(`${BASE}/${id}`, { method: 'PUT', headers: HEADERS, body: JSON.stringify(data) });
+    if (!r.ok) throw new Error('Write failed');
+  }
+
+  // ─── LOAD ─────────────────────────────────────────────────────
+  async function loadAll() {
+    try {
+      const bData = await readBin(BIN_BOOKINGS);
+      bookings = Array.isArray(bData.bookings) ? bData.bookings : [];
+
+      const lData = await readBin(BIN_LOG);
+      meetingLog = Array.isArray(lData.meetings) ? lData.meetings : [];
+
+      renderAll();
+      badge('ok', 'Synchronisiert ✓');
+    } catch(e) {
+      badge('err', 'Fehler beim Laden');
+    }
+  }
+
+  function renderAll() {
+    renderToday();
+    renderBookings();
+    renderLog();
+    renderCalendar();
+  }
+
+  // ─── CLASH DETECTION ─────────────────────────────────────────
+  function hasClash(date, start, end, excludeId = null) {
+    return bookings.some(b => {
+      if (b.id === excludeId) return false;
+      if (b.date !== date) return false;
+      return start < b.end && end > b.start;
+    });
+  }
+
+  function checkClash() {
+    const date  = document.getElementById('fDate').value;
+    const start = document.getElementById('fStart').value;
+    const end   = document.getElementById('fEnd').value;
+    const warn  = document.getElementById('clashWarning');
+    if (date && start && end && hasClash(date, start, end)) {
+      warn.classList.add('visible');
+    } else {
+      warn.classList.remove('visible');
+    }
+  }
+
+  // ─── SAVE BOOKING ─────────────────────────────────────────────
+  async function saveBooking() {
+    const name    = document.getElementById('fName').value.trim();
+    const date    = document.getElementById('fDate').value;
+    const start   = document.getElementById('fStart').value;
+    const end     = document.getElementById('fEnd').value;
+    const purpose = document.getElementById('fPurpose').value.trim();
+    const notes   = document.getElementById('fNotes').value.trim();
+
+    if (!name || !date || !start || !end || !purpose) {
+      alert('Bitte alle Pflichtfelder ausfüllen.');
+      return;
+    }
+    if (start >= end) {
+      alert('Die Endzeit muss nach der Startzeit liegen.');
+      return;
+    }
+    if (hasClash(date, start, end)) {
+      alert('Diese Zeit überschneidet sich mit einer bestehenden Buchung. Bitte eine andere Zeit wählen.');
+      return;
+    }
+
+    const btn = document.getElementById('saveBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span>⏳</span> Speichern…';
+    badge('', 'Speichern…');
+
+    try {
+      const booking = { id: Date.now().toString(), name, date, start, end, purpose, notes };
+      bookings.push(booking);
+      await writeBin(BIN_BOOKINGS, { bookings });
+      renderAll();
+      badge('ok', 'Gespeichert ✓');
+      ['fName','fDate','fStart','fEnd','fPurpose','fNotes'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('fDate').valueAsDate = new Date();
+      document.getElementById('clashWarning').classList.remove('visible');
+    } catch(e) {
+      badge('err', 'Fehler beim Speichern');
+      bookings.pop();
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = '<span>💾</span> Buchung speichern';
+  }
+
+  // ─── TODAY VIEW ───────────────────────────────────────────────
+  function renderToday() {
+    const today = new Date().toISOString().slice(0,10);
+    const todayStr = new Date().toLocaleDateString('de-DE', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
+    document.getElementById('todayDate').textContent = todayStr;
+
+    const todayBookings = bookings
+      .filter(b => b.date === today)
+      .sort((a,b) => a.start.localeCompare(b.start));
+
+    const el = document.getElementById('todaySlots');
+    if (!todayBookings.length) {
+      el.innerHTML = '<div class="today-empty">✅ Keine Buchungen heute – Raum frei</div>';
+      return;
+    }
+
+    el.innerHTML = todayBookings.map(b => `
+      <div class="today-slot">
+        <div class="slot-time">${b.start} – ${b.end}</div>
+        <div class="slot-dot booked"></div>
+        <div class="slot-info">
+          <div class="slot-name">${esc(b.name)}</div>
+          <div class="slot-purpose">${esc(b.purpose)}</div>
+        </div>
+        <button class="slot-end-btn" onclick="openEndModal('${b.id}')">Sitzung beenden</button>
+      </div>`).join('');
+  }
+
+  // ─── RENDER BOOKINGS ──────────────────────────────────────────
+  function renderBookings() {
+    const el = document.getElementById('bookingsList');
+    if (!bookings.length) {
+      el.innerHTML = '<div class="empty-state"><div class="icon">🏢</div>Keine aktiven Buchungen</div>';
+      return;
+    }
+    const sorted = [...bookings].sort((a,b) => (a.date+a.start).localeCompare(b.date+b.start));
+    el.innerHTML = sorted.map(b => {
+      const initials = b.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+      const dateStr  = b.date ? new Date(b.date+'T12:00').toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'}) : '—';
+      return `
+        <div class="booking-item">
+          <div class="booking-left">
+            <div class="booking-avatar">${initials}</div>
+            <div class="booking-info">
+              <div class="name">${esc(b.name)}</div>
+              <div class="meta">📅 ${dateStr} &nbsp;|&nbsp; 🕐 ${b.start} – ${b.end} Uhr</div>
+              <div class="purpose">📋 ${esc(b.purpose)}</div>
+              ${b.notes ? `<span class="notes-tag">📌 ${esc(b.notes)}</span>` : ''}
+            </div>
+          </div>
+          <div class="booking-actions">
+            <button class="end-btn" onclick="openEndModal('${b.id}')">Sitzung beenden</button>
+            <button class="delete-btn" onclick="openDeleteModal('${b.id}')" title="Buchung löschen">✕</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // ─── END SESSION MODAL ────────────────────────────────────────
+  function openEndModal(id) {
+    const b = bookings.find(x => x.id === id);
+    if (!b) return;
+    const dateStr = b.date ? new Date(b.date+'T12:00').toLocaleDateString('de-DE',{weekday:'long',day:'2-digit',month:'long',year:'numeric'}) : '—';
+    document.getElementById('endModalInfo').innerHTML =
+      `<strong>${esc(b.name)}</strong><br>${dateStr}<br>${b.start} – ${b.end} Uhr<br>📋 ${esc(b.purpose)}${b.notes ? '<br>📌 ' + esc(b.notes) : ''}`;
+    document.getElementById('endModal').classList.add('open');
+    document.getElementById('confirmEndBtn').onclick = () => confirmEnd(id);
+  }
+
+  async function confirmEnd(id) {
+    closeModal('endModal');
+    badge('', 'Archivieren…');
+    const b = bookings.find(x => x.id === id);
+    if (!b) return;
+    try {
+      const completedAt = new Date().toLocaleString('de-DE');
+      meetingLog.push({ ...b, completedAt });
+      await writeBin(BIN_LOG, { meetings: meetingLog });
+      bookings = bookings.filter(x => x.id !== id);
+      await writeBin(BIN_BOOKINGS, { bookings });
+      renderAll();
+      badge('ok', 'Archiviert ✓');
+    } catch(e) {
+      badge('err', 'Fehler beim Archivieren');
+    }
+  }
+
+  // ─── DELETE MODAL (no archive) ────────────────────────────────
+  function openDeleteModal(id) {
+    const b = bookings.find(x => x.id === id);
+    if (!b) return;
+    const dateStr = b.date ? new Date(b.date+'T12:00').toLocaleDateString('de-DE',{weekday:'long',day:'2-digit',month:'long',year:'numeric'}) : '—';
+    document.getElementById('deleteModalInfo').innerHTML =
+      `<strong>${esc(b.name)}</strong><br>${dateStr}<br>${b.start} – ${b.end} Uhr`;
+    document.getElementById('deleteModal').classList.add('open');
+    document.getElementById('confirmDeleteBtn').onclick = () => confirmDelete(id);
+  }
+
+  async function confirmDelete(id) {
+    closeModal('deleteModal');
+    badge('', 'Löschen…');
+    try {
+      bookings = bookings.filter(x => x.id !== id);
+      await writeBin(BIN_BOOKINGS, { bookings });
+      renderAll();
+      badge('ok', 'Gelöscht ✓');
+    } catch(e) {
+      badge('err', 'Fehler beim Löschen');
+    }
+  }
+
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+  }
+
+  // ─── RENDER LOG ───────────────────────────────────────────────
+  function renderLog() {
+    const tbody = document.getElementById('logBody');
+    document.getElementById('logCount').textContent = meetingLog.length + ' Einträge';
+    if (!meetingLog.length) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-muted)">Noch keine abgeschlossenen Besprechungen</td></tr>';
+      return;
+    }
+    const sorted = [...meetingLog].sort((a,b) => (b.date+b.start).localeCompare(a.date+a.start));
+    tbody.innerHTML = sorted.map(r => {
+      const dateStr = r.date ? new Date(r.date+'T12:00').toLocaleDateString('de-DE') : '—';
+      return `<tr>
+        <td>${esc(r.name)}</td>
+        <td>${dateStr}</td>
+        <td>${r.start} Uhr</td>
+        <td>${r.end} Uhr</td>
+        <td>${esc(r.purpose||'—')}</td>
+        <td>${esc(r.notes||'—')}</td>
+        <td>${r.completedAt||'—'}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // ─── EXPORT EXCEL ─────────────────────────────────────────────
+  function exportExcel() {
+    if (!meetingLog.length) { alert('Keine Einträge zum Exportieren.'); return; }
+    const rows = [['Name','Datum','Startzeit','Endzeit','Zweck','Hinweise','Abgeschlossen am']];
+    [...meetingLog].sort((a,b) => (a.date+a.start).localeCompare(b.date+b.start)).forEach(r => {
+      const dateStr = r.date ? new Date(r.date+'T12:00').toLocaleDateString('de-DE') : '—';
+      rows.push([r.name, dateStr, r.start, r.end, r.purpose||'', r.notes||'', r.completedAt||'']);
+    });
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [22,14,10,10,30,30,22].map(w => ({ wch: w }));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Besprechungsprotokoll');
+    const today = new Date().toLocaleDateString('de-DE').replace(/\./g,'-');
+    XLSX.writeFile(wb, `Besprechungsprotokoll_HUZ_${today}.xlsx`);
+  }
+
+  // ─── CALENDAR ─────────────────────────────────────────────────
+  let calYear = new Date().getFullYear();
+  let calMonth = new Date().getMonth();
+  const MONTHS = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+
+  function renderCalendar() {
+    document.getElementById('calTitle').textContent = MONTHS[calMonth] + ' ' + calYear;
+    const map = {};
+    const add = (item, type) => {
+      if (!item.date) return;
+      if (!map[item.date]) map[item.date] = [];
+      map[item.date].push({ ...item, _type: type });
+    };
+    bookings.forEach(b => add(b, 'booking'));
+    meetingLog.forEach(r => add(r, 'log'));
+
+    const firstDay = new Date(calYear, calMonth, 1);
+    const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+    const startDow = (firstDay.getDay()+6) % 7;
+    const today = new Date().toISOString().slice(0,10);
+    const rows = Math.ceil((startDow + daysInMonth) / 7);
+    let html = ''; let day = 1;
+
+    for (let r = 0; r < rows; r++) {
+      html += '<tr>';
+      for (let c = 0; c < 7; c++) {
+        const idx = r*7+c;
+        if (idx < startDow || day > daysInMonth) {
+          html += '<td class="cal-cell cal-cell-empty"></td>';
+        } else {
+          const ds = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+          const isToday = ds === today;
+          const evs = (map[ds]||[]).sort((a,b) => (a.start||'').localeCompare(b.start||''));
+          html += `<td class="cal-cell${isToday?' cal-today':''}">
+            <div class="cal-day-num">${day}</div>
+            <div class="cal-events">${evs.map(b =>
+              `<div class="cal-event cal-event-${b._type}" title="${esc(b.name)} · ${b.start}–${b.end} · ${b.purpose||''}">${esc(b.name.split(' ')[0])} ${b.start}</div>`
+            ).join('')}</div>
+          </td>`;
+          day++;
+        }
+      }
+      html += '</tr>';
+    }
+    document.getElementById('calGrid').innerHTML = html;
+  }
+
+  function calPrev() { if (--calMonth < 0) { calMonth=11; calYear--; } renderCalendar(); }
+  function calNext() { if (++calMonth > 11) { calMonth=0; calYear++; } renderCalendar(); }
+
+  // ─── TABS ─────────────────────────────────────────────────────
+  function switchTab(name, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-'+name).classList.add('active');
+  }
+
+  // ─── HELPERS ─────────────────────────────────────────────────
+  function esc(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  ['endModal','deleteModal'].forEach(id => {
+    document.getElementById(id).addEventListener('click', function(e) {
+      if (e.target === this) closeModal(id);
+    });
+  });
+
+  document.getElementById('fDate').valueAsDate = new Date();
+
+  loadAll();
+  setInterval(loadAll, 60000);
+</script>
+</body>
+</html>

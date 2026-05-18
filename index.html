@@ -457,33 +457,6 @@
 
   .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
 
-  /* LOGIN */
-  #loginOverlay {
-    position: fixed; inset: 0;
-    background: var(--bg);
-    z-index: 1000;
-    display: flex; align-items: center; justify-content: center; padding: 16px;
-  }
-  #loginOverlay.hidden { display: none; }
-
-  .login-card {
-    background: var(--surface); border-radius: var(--radius);
-    border: 1px solid var(--border); box-shadow: var(--shadow-lg);
-    padding: 32px; width: 100%; max-width: 360px;
-  }
-
-  .login-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
-  .login-heading { font-size: 16px; font-weight: 600; letter-spacing: -0.2px; margin-bottom: 4px; }
-  .login-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.5; }
-
-  .login-error {
-    font-size: 13px; color: var(--danger);
-    background: var(--danger-light); border: 1px solid #fecaca;
-    border-radius: var(--radius-sm); padding: 10px 12px;
-    margin-bottom: 16px; display: none;
-  }
-  .login-error.visible { display: block; }
-
   @media (max-width: 520px) {
     .form-grid { grid-template-columns: 1fr; }
     .form-group.full { grid-column: 1; }
@@ -494,28 +467,6 @@
 </style>
 </head>
 <body>
-
-<!-- LOGIN -->
-<div id="loginOverlay">
-  <div class="login-card">
-    <div class="login-logo">
-      <div class="logo-icon">🏢</div>
-      <div class="logo-text"><h1>Konferenzraum</h1></div>
-    </div>
-    <p class="login-heading">Anmelden</p>
-    <p class="login-sub">Bitte geben Sie Ihre Zugangsdaten ein, um fortzufahren.</p>
-    <div class="login-error" id="loginError">Ungültige Zugangsdaten. Bitte erneut versuchen.</div>
-    <div class="form-group" style="margin-bottom:14px">
-      <label>Benutzername</label>
-      <input type="text" id="loginUser" placeholder="Benutzername" autocomplete="username">
-    </div>
-    <div class="form-group" style="margin-bottom:20px">
-      <label>Passwort</label>
-      <input type="password" id="loginPass" placeholder="Passwort" autocomplete="current-password">
-    </div>
-    <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="doLogin()">Anmelden</button>
-  </div>
-</div>
 
 <header>
   <div class="logo">
@@ -678,30 +629,6 @@
 </div>
 
 <script>
-  // ─── AUTH ─────────────────────────────────────────────────────
-  if (sessionStorage.getItem('huz_auth') === '1') {
-    document.getElementById('loginOverlay').classList.add('hidden');
-  }
-
-  function doLogin() {
-    const u = document.getElementById('loginUser').value.trim();
-    const p = document.getElementById('loginPass').value;
-    if (u === 'HUZ' && p === 'BreiterWeg21') {
-      sessionStorage.setItem('huz_auth', '1');
-      document.getElementById('loginOverlay').classList.add('hidden');
-    } else {
-      document.getElementById('loginError').classList.add('visible');
-      document.getElementById('loginPass').value = '';
-      document.getElementById('loginPass').focus();
-    }
-  }
-
-  document.addEventListener('DOMContentLoaded', () => {
-    ['loginUser','loginPass'].forEach(id => {
-      document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
-    });
-  });
-
   // ─── CONFIG ───────────────────────────────────────────────────
   const API_KEY       = '$2a$10$AQI9yI/6geWB3foXvxawxexTC3fWMKMQCrmxY6nDaDTYhCX50A0YW';
   const BIN_BOOKINGS  = '6a0aa860adc21f119ab7f227';
